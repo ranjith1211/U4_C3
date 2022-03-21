@@ -1,11 +1,12 @@
 const express = require('express');
-const { body } = require('express-validator');
 
 const router = express.Router();
 
 const upload = require('../middleware/uploads');
 
 const User = require('../models/user.model');
+
+const { body, validationResult } = require('express-validator');
 
 router.post(
 	'',
@@ -14,25 +15,30 @@ router.post(
 		.trim()
 		.not()
 		.isEmpty()
-		.withmessage('firstName cant be empty')
+		.withMessage('firstName should not be empty')
 		.isLength({ mid: 3 }, { max: 30 })
-		.withmessage('firstName should be between 3 to 30'),
+	    .withMessage('firstName should be between 3 to 30'),
 	body('lastName')
 		.trim()
 		.not()
 		.isEmpty()
-		.withmessage('firstName cant be empty')
+	    
 		.isLength({ mid: 3 }, { max: 30 }),
 	body('age')
 		.not()
 		.isEmpty()
 		.custom((value) => {
-            if(value < 1 || value>150){
-                throw new Error('age should be between 1 and 150')
-            }
-            return true
-        }),
+			if (value < 1 || value > 150) {
+				throw new Error('age should be between 1 and 150');
+			}
+			return true;
+		}),
 	async (req, res) => {
+		const errors = validationResult(req);
+		if (!errors.isEmpty()) {
+			return res.status(400).json({ errors: errors.array() });
+		}
+
 		try {
 			let user = await User.findOne({ email: req.body.email });
 
